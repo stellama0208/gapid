@@ -146,8 +146,6 @@ public class Main {
       Runnable onStart = () -> {
         if (args.length == 1) {
           models.capture.loadCapture(new File(args[0]));
-        } else if (!models.settings.skipWelcomeScreen) {
-//          showWelcomeDialog(server.getClient(), window.getShell(), models, widgets);
         }
       };
 

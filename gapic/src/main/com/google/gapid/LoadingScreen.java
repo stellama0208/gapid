@@ -70,6 +70,7 @@ public class LoadingScreen extends Composite {
 
     statusLabel = createLabel(container, "Starting up...");
     statusLabel.setLayoutData(new GridData(SWT.CENTER, SWT.TOP, true, false));
+    statusLabel.setVisible(false);
   }
 
   public void setText(String status) {
