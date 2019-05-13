@@ -48,6 +48,7 @@ import java.util.Map;
 public interface Theme {
   @Icon("android.png") public Image androidLogo();
   @Icon("arrow.png") public Image arrow();
+  @Icon("clipboard.png") public Image clipboard();
   @Icon("color_buffer0.png") public Image colorBuffer0();
   @Icon("color_buffer1.png") public Image colorBuffer1();
   @Icon("color_buffer2.png") public Image colorBuffer2();
