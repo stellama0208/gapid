@@ -75,6 +75,11 @@ func doReplay(t *testing.T, f func(*builder.Builder)) error {
 		return err
 	}
 
+	err = b.RegisterReplayStatusReader(ctx, device.Instance().ID.ID())
+	if err != nil {
+		return log.Err(ctx, err, "Failed to register replay status notification reader.")
+	}
+
 	err = replay.Execute(ctx, "", payload, decoder, notification, bgc, abi.MemoryLayout, os)
 	if err != nil {
 		t.Errorf("Executor failed with error: %v", err)
