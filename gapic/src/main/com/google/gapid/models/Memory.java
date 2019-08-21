@@ -17,6 +17,7 @@ package com.google.gapid.models;
 
 import static com.google.gapid.models.DeviceDependentModel.Source.withSource;
 import static com.google.gapid.util.Paths.memoryAfter;
+import static com.google.gapid.util.Paths.type;
 import static com.google.gapid.util.Ranges.memory;
 import static com.google.gapid.util.Ranges.merge;
 import static com.google.gapid.util.Ranges.relative;
@@ -30,6 +31,8 @@ import com.google.gapid.models.CommandStream.CommandIndex;
 import com.google.gapid.models.CommandStream.Observation;
 import com.google.gapid.proto.service.Service;
 import com.google.gapid.proto.service.path.Path;
+import com.google.gapid.proto.service.types.TypeInfo.Type;
+import com.google.gapid.proto.service.types.TypeInfo.Type.TyCase;
 import com.google.gapid.server.Client;
 import com.google.gapid.util.Events;
 import com.google.gapid.util.MoreFutures;
@@ -195,6 +198,17 @@ public class Memory extends DeviceDependentModel<Memory.Data, Memory.Source, Voi
       }
 
       return MoreFutures.transform(getFromServer(page), mem -> {
+        for (Service.TypedMemoryRange range : mem.typedRanges) {
+          Path.Type type = range.getType();
+          Service.Value value = Futures.getUnchecked(client.get(type(type), device));
+          Type typeReal = value.getType();
+          TyCase typecase = typeReal.getTyCase();
+          if (typecase == TyCase.SLICE) {
+            long temp = typeReal.getSlice().getUnderlying();
+            typecase.getNumber();
+          }
+
+        }
         addToCache(page, mem);
         return mem;
       });
@@ -236,15 +250,18 @@ public class Memory extends DeviceDependentModel<Memory.Data, Memory.Source, Voi
 
     private final List<Service.MemoryRange> reads;
     private final List<Service.MemoryRange> writes;
+    public final List<Service.TypedMemoryRange> typedRanges;
 
     private Segment(byte[] data, BitSet known, int offset, int length,
-        List<Service.MemoryRange> reads, List<Service.MemoryRange> writes) {
+        List<Service.MemoryRange> reads, List<Service.MemoryRange> writes,
+        List<Service.TypedMemoryRange> typedRanges) {
       this.data = data;
       this.offset = offset;
       this.length = length;
       this.known = known;
       this.reads = reads;
       this.writes = writes;
+      this.typedRanges = typedRanges;
     }
 
     public Segment(Service.Value value) {
@@ -255,6 +272,7 @@ public class Memory extends DeviceDependentModel<Memory.Data, Memory.Source, Voi
       length = data.length;
       reads = merge(mem.getReadsList());
       writes = merge(mem.getWritesList());
+      typedRanges = mem.getTypedRangesList();
     }
 
     public static Segment combine(List<Segment> segments, int length) {
@@ -264,6 +282,7 @@ public class Memory extends DeviceDependentModel<Memory.Data, Memory.Source, Voi
 
       List<Service.MemoryRange> reads = Lists.newArrayList();
       List<Service.MemoryRange> writes = Lists.newArrayList();
+      List<Service.TypedMemoryRange> typedRanges = Lists.newArrayList();
 
       for (Iterator<Segment> it = segments.iterator(); it.hasNext() && done < length; ) {
         Segment segment = it.next();
@@ -281,15 +300,18 @@ public class Memory extends DeviceDependentModel<Memory.Data, Memory.Source, Voi
           writes.add((done == 0 && segment.offset == 0) ?
               range : memory(done - segment.offset + range.getBase(), range.getSize()));
         }
+        for (Service.TypedMemoryRange range : segment.typedRanges) {
+          typedRanges.add(range);
+        }
 
         done += count;
       }
-      return new Segment(data, known, 0, done, merge(reads), merge(writes));
+      return new Segment(data, known, 0, done, merge(reads), merge(writes), typedRanges);
     }
 
     public Segment subSegment(int start, int count) {
       return new Segment(
-          data, known, offset + start, Math.min(count, length - start), reads, writes);
+          data, known, offset + start, Math.min(count, length - start), reads, writes, typedRanges);
     }
 
     public String asString(int start, int count) {

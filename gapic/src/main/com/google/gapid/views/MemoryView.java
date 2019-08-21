@@ -21,6 +21,7 @@ import static com.google.gapid.util.Loadable.Message.info;
 import static com.google.gapid.util.Loadable.MessageType.Error;
 import static com.google.gapid.util.Loadable.MessageType.Info;
 import static com.google.gapid.util.Logging.throttleLogRpcError;
+import static com.google.gapid.widgets.Widgets.createButton;
 import static com.google.gapid.widgets.Widgets.createDropDown;
 import static com.google.gapid.widgets.Widgets.createDropDownViewer;
 import static com.google.gapid.widgets.Widgets.createLabel;
@@ -70,6 +71,7 @@ import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.StackLayout;
 import org.eclipse.swt.events.MouseEvent;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Color;
@@ -78,6 +80,8 @@ import org.eclipse.swt.graphics.GC;
 import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -105,7 +109,10 @@ public class MemoryView extends Composite
 
   private final Models models;
   private final Selections selections;
+  private final Composite contents;
+  private final StackLayout stackLayout;
   private final MemoryPanel memoryPanel;
+  private final StructPanel structPanel;
   protected final LoadablePanel<InfiniteScrolledComposite> loading;
   protected final InfiniteScrolledComposite memoryScroll;
   private final State uiState = new State();
@@ -116,10 +123,21 @@ public class MemoryView extends Composite
 
     memoryPanel = new MemoryPanel(this, widgets);
     setLayout(new GridLayout(1, true));
+    stackLayout = new StackLayout();
 
     selections = new Selections(this, this::setDataType, this::setObservation);
-    loading = LoadablePanel.create(this, widgets,
+    selections.structButton.addListener(SWT.Selection, e -> this.switchMemoryView());
+
+    contents = new Composite(this, SWT.NONE);
+    contents.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+    contents.setLayout(stackLayout);
+    loading = LoadablePanel.create(contents, widgets,
         panel -> new InfiniteScrolledComposite(panel, SWT.H_SCROLL | SWT.V_SCROLL, memoryPanel));
+    structPanel = new StructPanel(contents, SWT.NONE);
+    stackLayout.topControl = loading;
+    contents.layout();
+
     memoryScroll = loading.getContents();
 
     selections.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
@@ -212,6 +230,16 @@ public class MemoryView extends Composite
     updateUi();
   }
 
+  private void switchMemoryView() {
+    Control currentControl = stackLayout.topControl;
+    if (currentControl == loading) {
+      stackLayout.topControl = structPanel;
+    } else {
+      stackLayout.topControl = loading;
+    }
+    contents.layout();
+  }
+
   private void updateUi() {
     if (!models.memory.isLoaded()) {
       return;
@@ -289,11 +317,12 @@ public class MemoryView extends Composite
     private final Combo typeCombo;
     private final Label obsLabel;
     private final ComboViewer obsCombo;
+    public Button structButton;
 
     public Selections(Composite parent, Consumer<DataType> dataTypeListener,
         Consumer<Observation> observationListener) {
       super(parent, SWT.NONE);
-      setLayout(new GridLayout(6, false));
+      setLayout(new GridLayout(7, false));
 
       createLabel(this, "Pool:").setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
       poolLabel = createLabel(this, "0");
@@ -320,6 +349,8 @@ public class MemoryView extends Composite
 
       obsLabel.setVisible(false);
       obsCombo.getCombo().setVisible(false);
+
+      structButton = new Button(this, SWT.NONE);
     }
 
     private ComboViewer createObservationSelector() {
@@ -675,6 +706,24 @@ public class MemoryView extends Composite
     protected int getCharColumn(int offset) {
       int idx = Arrays.binarySearch(charOffset, offset);
       return (idx < 0) ? (-idx - 1) - 1 : idx;
+    }
+  }
+
+  private static class StructPanel extends Composite {
+    private List<Service.TypedMemoryRange> structs;
+    public Button button;
+
+    public StructPanel(Composite parent, int style) {
+      super(parent, style);
+      setLayout(new RowLayout());
+
+      createLabel(this, "2333333333333");
+      button = createButton(this, "whyyyyyyyyyyyyyyyyyyyyy", e -> {});
+
+    }
+
+    public void setStructs(List<Service.TypedMemoryRange> structs) {
+      this.structs = structs;
     }
   }
 

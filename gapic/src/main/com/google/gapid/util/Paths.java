@@ -175,7 +175,8 @@ public class Paths {
             .setAfter(index.getCommand())
             .setPool(pool)
             .setAddress(address)
-            .setSize(size))
+            .setSize(size)
+            .setIncludeTypes(true))
         .build();
   }
 
@@ -350,6 +351,12 @@ public class Paths {
     return Path.Any.newBuilder()
         .setTraceConfig(Path.DeviceTraceConfiguration.newBuilder()
             .setDevice(device))
+        .build();
+  }
+
+  public static Path.Any type(Path.Type type) {
+    return Path.Any.newBuilder()
+        .setType(type)
         .build();
   }
 
