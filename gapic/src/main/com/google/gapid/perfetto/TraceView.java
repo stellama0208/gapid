@@ -123,7 +123,7 @@ public class TraceView extends Composite
       if (kb.isKeyDown('m')) {
         Selection selection = state.getSelection();
         if (selection != null) {
-          selection.mark(state);
+          selection.markTime(state);
           redraw = true;
         }
       }
