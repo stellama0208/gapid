@@ -135,7 +135,16 @@ public abstract class TrackPanel extends Panel.Base implements TitledPanel {
         .translated(LABEL_WIDTH, TRACK_MARGIN);
   }
 
+  @Override
+  public boolean onClick(double x, double y) {
+    if (x < LABEL_WIDTH || y < TRACK_MARGIN || y > height - TRACK_MARGIN) {
+      return false;
+    }
+    return onTrackMouseClick(x - LABEL_WIDTH, y - TRACK_MARGIN);
+  }
+
   protected abstract Hover onTrackMouseMove(Fonts.TextMeasurer m, double x, double y);
+  protected abstract boolean onTrackMouseClick(double x, double y);
 
   public static class TrackDragger implements Panel.Dragger {
     private final State state;

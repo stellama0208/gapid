@@ -263,6 +263,15 @@ public class RootPanel extends Panel.Base implements State.Listener {
     }) : result;
   }
 
+  @Override
+  public boolean onClick(double x, double y) {
+    double topHeight = top.getPreferredHeight();
+    if (y >= topHeight) {
+      return bottom.onClick(x, y - topHeight + state.getScrollOffset());
+    }
+    return false;
+  }
+
   public boolean zoom(double x, double zoomFactor) {
     TimeSpan visible = state.getVisibleTime();
     long cursorTime = state.pxToTime(x - LABEL_WIDTH);

@@ -26,6 +26,12 @@ public interface Panel {
     return Hover.NONE;
   }
 
+  @SuppressWarnings("unused")
+  public default boolean onClick(double x, double y) {
+    /* Do nothing, and return false to show don't redraw by default. */
+    return false;
+  }
+
   public void visit(Visitor v, Area area);
 
   public static interface Repainter {

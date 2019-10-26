@@ -184,6 +184,11 @@ public class TrackContainer {
         return display.getSystemCursor(SWT.CURSOR_HAND);
       }
     }
+
+    @Override
+    public boolean onClick(double x, double y) {
+      return track.onClick(x, y);
+    }
   }
 
   private static class Group extends Panel.Base {
@@ -346,6 +351,15 @@ public class TrackContainer {
       @Override
       public Cursor getCursor(Display display) {
         return display.getSystemCursor(SWT.CURSOR_HAND);
+      }
+    }
+
+    @Override
+    public boolean onClick(double x, double y) {
+      if (expanded) {
+        return (y < TITLE_HEIGHT) ? false : detail.onClick(x, y - TITLE_HEIGHT);
+      } else {
+        return summary.onClick(x, y);
       }
     }
   }

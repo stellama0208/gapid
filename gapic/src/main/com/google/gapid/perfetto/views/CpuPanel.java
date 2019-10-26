@@ -228,9 +228,9 @@ public class CpuPanel extends TrackPanel implements Selectable {
 
           @Override
           public boolean click() {
-            state.setSelection(CpuTrack.getSlice(state.getQueryEngine(), id));
-            state.setSelectedCpuSliceIds(utid);
-            state.addMarkLocation(CpuPanel.this, new Location(start, end));
+//            state.setSelection(CpuTrack.getSlice(state.getQueryEngine(), id));
+//            state.setSelectedCpuSliceIds(utid);
+//            state.addMarkLocation(CpuPanel.this, new Location(start, end));
             return true;
           }
         };
@@ -266,6 +266,27 @@ public class CpuPanel extends TrackPanel implements Selectable {
         hovered = null;
       }
     };
+  }
+
+  @Override
+  public boolean onTrackMouseClick(double x, double y) {
+    CpuTrack.Data data = track.getData(state, () -> { /* nothing */ });
+    mouseXpos = x;
+    long t = state.pxToTime(x);
+    for (int i = 0; i < data.starts.length; i++) {
+      if (data.starts[i] <= t && t <= data.ends[i]) {
+        long id = data.ids[i];
+        long utid = data.utids[i];
+        long start = data.starts[i];
+        long end = data.ends[i];
+
+        state.setSelection(CpuTrack.getSlice(state.getQueryEngine(), id));
+        state.setSelectedCpuSliceIds(utid);
+        state.addMarkLocation(CpuPanel.this, new Location(start, end));
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override
